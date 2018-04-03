@@ -16,7 +16,7 @@ Notes:
     modifications were made.
     - You are required to implement (override) the build_signal function
     after extending this interface. Attempting to override any other method
-    in this class will lead to immediate disqualification from the round.
+    in this class will lead to immediate disq   ualification from the round.
 
 Questions:
     Please contact jigar@uchicago.edu or vtalasani@uchicago.edu
@@ -24,6 +24,8 @@ Questions:
 
 import pandas as pd
 import numpy as np
+import pickle
+
 
 MAX_LOOKBACK = 50
 
@@ -41,15 +43,23 @@ class PortfolioGenerator(object):
         Raises:
             AssertionError: ticker_data.csv/factor_data.csv has an invalid format
         '''
-        ticker_df = pd.read_csv('stock_data/ticker_data.csv')
-        factor_df = pd.read_csv('stock_data/factor_data.csv')
-        assert 'timestep' in ticker_df.columns, "ticker_data.csv has an invalid format"
-        assert 'ticker' in ticker_df.columns, "ticker_data.csv has an invalid format"
-        assert 'returns' in ticker_df.columns, "ticker_data.csv has an invalid format"
-        assert 'timestep' in factor_df.columns, "factor_data.csv has an invalid format"
-        ticker_df.set_index('timestep', inplace=True)
-        factor_df.set_index('timestep', inplace=True)
-        stock_df = ticker_df.join(factor_df, how='left')
+        # ticker_df = pd.read_csv('stock_data/ticker_data.csv')
+        # factor_df = pd.read_csv('stock_data/factor_data.csv')
+        # assert 'timestep' in ticker_df.columns, "ticker_data.csv has an invalid format"
+        # assert 'ticker' in ticker_df.columns, "ticker_data.csv has an invalid format"
+        # assert 'returns' in ticker_df.columns, "ticker_data.csv has an invalid format"
+        # assert 'timestep' in factor_df.columns, "factor_data.csv has an invalid format"
+        # ticker_df.set_index('timestep', inplace=True)
+        # factor_df.set_index('timestep', inplace=True)
+        # stock_df = ticker_df.join(factor_df, how='left')
+
+        save_path = 'stock_df.pic'
+        # with open(save_path, 'wb') as sf:
+        #     pickle.dump(stock_df, sf)
+
+        stock_df = pickle.load(open(save_path, 'rb'))
+
+
         return stock_df
 
     def build_signal(self, stock_features):
@@ -77,14 +87,19 @@ class PortfolioGenerator(object):
         daily_returns = []
         stock_df = self.read_stock_data()
         for idx in stock_df.index.unique():
+        # for idx in range(1020,1070):
             print("timestep", idx)
             if idx < MAX_LOOKBACK:
                 continue
             stock_features = stock_df.loc[idx-MAX_LOOKBACK:idx-1]
             returns = stock_df.loc[idx:idx].set_index('ticker')['returns']
             signal = self.build_signal(stock_features)
+            # print(signal)
+            # print(returns)
             signal_return = returns * signal
+            # print(signal_return)
             daily_returns.append(np.mean(signal_return))
+        print(daily_returns)
         sharpe_ratio = np.sqrt(252) * (np.mean(daily_returns) / np.std(daily_returns))
         return sharpe_ratio
 

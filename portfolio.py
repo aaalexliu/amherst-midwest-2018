@@ -87,18 +87,22 @@ class PortfolioGenerator(object):
         daily_returns = []
         stock_df = self.read_stock_data()
         for idx in stock_df.index.unique():
-        # for idx in range(1020,1070):
+        # for idx in range(50,200):
             print("timestep", idx)
             if idx < MAX_LOOKBACK:
                 continue
             stock_features = stock_df.loc[idx-MAX_LOOKBACK:idx-1]
             returns = stock_df.loc[idx:idx].set_index('ticker')['returns']
             signal = self.build_signal(stock_features)
-            # print(signal)
+            print(signal)
             # print(returns)
             signal_return = returns * signal
             # print(signal_return)
             daily_returns.append(np.mean(signal_return))
+            if idx % 100:
+                r_path = 'daily_returns.pic'
+                with open(r_path, 'wb') as sf:
+                    pickle.dump(daily_returns, sf)
         print(daily_returns)
         sharpe_ratio = np.sqrt(252) * (np.mean(daily_returns) / np.std(daily_returns))
         return sharpe_ratio
